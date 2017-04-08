@@ -58,6 +58,58 @@ void UGrabber::SetupInputComponent()
 	}
 }
 
+// Called every frame
+void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	/// Get the player viewpoint this tick
+	FVector PlayerViewPointLocation;
+	FRotator PlayerViewPointRotation;
+	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(
+		OUT PlayerViewPointLocation,
+		OUT PlayerViewPointRotation
+	);
+
+
+	FVector LineTraceEnd = PlayerViewPointLocation + PlayerViewPointRotation.Vector() * Reach;
+
+	/// if the physics handle is attached
+	/// move the object we're holding
+	if (PhysicsHandle->GrabbedComponent)
+	{
+		PhysicsHandle->SetTargetLocation(LineTraceEnd);
+	}
+}
+
+
+void UGrabber::Grab()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Grab key pressed"));
+
+	/// Line trace and see if we reach any actors with physics body collision channel set
+	auto HitResult = GetFirstPhysicsBodyInReach();
+	auto ComponentToGrab = HitResult.GetComponent();
+	auto ActorHit = HitResult.GetActor();
+
+	/// If we hit something then attach a physics handle
+	if (ActorHit)
+	{
+		PhysicsHandle->GrabComponentAtLocation(
+			ComponentToGrab,
+			NAME_None,
+			ComponentToGrab->GetOwner()->GetActorLocation()
+		);
+	}
+}
+
+void UGrabber::Release()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Release key pressed"));
+
+	PhysicsHandle->ReleaseComponent();
+}
+
 FHitResult UGrabber::GetFirstPhysicsBodyInReach() const
 {
 	/// Get the player viewpoint this tick
@@ -93,35 +145,5 @@ FHitResult UGrabber::GetFirstPhysicsBodyInReach() const
 		UE_LOG(LogTemp, Warning, TEXT("Line trace hit: %s"), *ActorHit->GetName());
 	}
 
-	return FHitResult();
+	return Hit;
 }
-
-
-void UGrabber::Grab()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Grab key pressed"));
-
-	/// Line trace and see if we reach any actors with physics body collision channel set
-	GetFirstPhysicsBodyInReach();
-
-	/// If we hit something then attach a physics handle
-	// TODO attach physics handle
-}
-
-void UGrabber::Release()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Release key pressed"));
-
-	// TODO release physics handle
-}
-
-
-// Called every frame
-void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	/// if the physics handle is attached
-		/// move the object we're holding
-}
-
