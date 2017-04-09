@@ -40,6 +40,6 @@ private:
 
 	AActor* Owner; // owning door
 
-	AActor* ActorThatOpens;
-	
+	// Returns total mass in kg
+	float GetTotalMassOfActorsOnPlate();
 };
